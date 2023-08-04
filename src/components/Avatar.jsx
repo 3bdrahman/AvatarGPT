@@ -68,31 +68,80 @@ export function Avatar(props) {
   // const audio = useMemo(() => audioURL && new Audio(audioURL), [audioURL]);
 
   useFrame(() => {
-    if (!audio || !lipsync) return; // If the audio or lipsync data isn't loaded yet, do nothing
+    if (!audio || !lipsync) return;
   
-    const currentAudioTime = audio.currentTime; // Move this line before the use of `currentAudioTime`
-  
-    Object.values(corresponding).forEach((value) => {
-      nodes.Wolf3D_Head.morphTargetInfluences[
-        nodes.Wolf3D_Head.morphTargetDictionary[value]
-      ] = 0;
-      nodes.Wolf3D_Teeth.morphTargetInfluences[
-        nodes.Wolf3D_Teeth.morphTargetDictionary[value]
-      ] = 0;
-    })
-    for(let i = 0; i < lipsync.mouthCues.length; i++){
-      const mouthCue = lipsync.mouthCues[i]
-      if(currentAudioTime >= mouthCue.start && currentAudioTime <= mouthCue.end ){
+    const currentAudioTime = audio.currentTime;
+    
+    // Reset all morph targets
+    
+      Object.values(corresponding).forEach((value) => {
         nodes.Wolf3D_Head.morphTargetInfluences[
-          nodes.Wolf3D_Head.morphTargetDictionary[corresponding[mouthCue.value]]
-        ] = 1;
+          nodes.Wolf3D_Head.morphTargetDictionary[value]
+        ] = 0;
         nodes.Wolf3D_Teeth.morphTargetInfluences[
-          nodes.Wolf3D_Teeth.morphTargetDictionary[corresponding[mouthCue.value]]
-        ] = 1;
-        break;
+          nodes.Wolf3D_Teeth.morphTargetDictionary[value]
+        ] = 0;
+      });
+    
+    
+    let currentMouthCue = null;
+    let nextMouthCue = null;
+    
+      // Find the current, next mouth cues
+      for (let i = 0; i < lipsync.mouthCues.length - 1; i++) { // Notice the -1
+        const mouthCue = lipsync.mouthCues[i];
+        if (currentAudioTime >= mouthCue.start && currentAudioTime <= mouthCue.end) {
+          currentMouthCue = mouthCue;
+          nextMouthCue = lipsync.mouthCues[i + 1];
+          if (nextMouthCue.start === currentMouthCue.start) {
+            console.warn('Found adjacent cues with the same start time:', currentMouthCue, nextMouthCue);
+            // Handle this special case appropriately, depending on your needs.
+          }
+          break;
+        }
+      }
+
+    if (currentMouthCue) {
+      // Interpolate between current and next viseme based on audio time
+      let interpolationValue = 1; // Default value
+
+if (currentMouthCue) {
+  if (nextMouthCue) {
+    // Check for unexpected values
+    if (nextMouthCue.start === currentMouthCue.start) {
+      console.warn('nextMouthCue.start is equal to currentMouthCue.start, this might cause a glitch:', nextMouthCue, currentMouthCue);
+    } else {
+      interpolationValue = (currentAudioTime - currentMouthCue.start) / (nextMouthCue.start - currentMouthCue.start);
+    }
+  } else {
+    console.warn('nextMouthCue is null or undefined:', nextMouthCue);
+  }
+}
+
+// Rest of the code using interpolationValue...
+      const teethInfluence = 0.95;
+      // Set current viseme influence
+      nodes.Wolf3D_Head.morphTargetInfluences[
+        nodes.Wolf3D_Head.morphTargetDictionary[corresponding[currentMouthCue.value]]
+      ] = 1 - interpolationValue;
+      nodes.Wolf3D_Teeth.morphTargetInfluences[
+        nodes.Wolf3D_Teeth.morphTargetDictionary[corresponding[currentMouthCue.value]]
+      ] = (1 - interpolationValue) * teethInfluence;
+  
+      // If there's a next cue, set its influence with interpolation
+      if (nextMouthCue) {
+        nodes.Wolf3D_Head.morphTargetInfluences[
+          nodes.Wolf3D_Head.morphTargetDictionary[corresponding[nextMouthCue.value]]
+        ] = interpolationValue;
+        nodes.Wolf3D_Teeth.morphTargetInfluences[
+          nodes.Wolf3D_Teeth.morphTargetDictionary[corresponding[nextMouthCue.value]]
+        ] = interpolationValue * teethInfluence;
       }
     }
-  })
+    
+  });
+  
+
 
   // useEffect(() => {
   //   if(playAudio){
