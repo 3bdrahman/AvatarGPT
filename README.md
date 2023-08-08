@@ -31,5 +31,9 @@ Follow these steps to get the project running locally:
 5. inside back-end project folder run `npm run dev`.
 ## Demo: 
 
-https://github.com/3bdrahman/avatarGPT/assets/35944185/f88de288-540b-4676-9d0c-e2ae58b5b19c
+
+
+
+
+https://github.com/3bdrahman/avatarGPT/assets/35944185/61bf7690-500f-42d5-9034-43715060dacd
 
