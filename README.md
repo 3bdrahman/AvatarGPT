@@ -1,3 +1,4 @@
+
 # AvatarGPT Project
 React application that imitates a virtual chat with a 3D Ready Player Me avatar (RPM) with help of the following APIs:
 - Openai Whisper API: transcription of audio recording
@@ -28,3 +29,7 @@ Follow these steps to get the project running locally:
 3. run `npm install` in both project folders back-end and front-end.
 4. refer to back-end documentation regarding environment variables / API keys.
 5. inside back-end project folder run `npm run dev`.
+## Demo: 
+
+https://github.com/3bdrahman/avatarGPT/assets/35944185/f88de288-540b-4676-9d0c-e2ae58b5b19c
+
