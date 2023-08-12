@@ -33,7 +33,6 @@ Follow these steps to get the project running locally:
 
 
 
+https://github.com/3bdrahman/avatarGPT/assets/test-conversation.mp4
 
-
-https://github.com/3bdrahman/avatarGPT/assets/35944185/61bf7690-500f-42d5-9034-43715060dacd
 
