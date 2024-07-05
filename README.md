@@ -1,3 +1,11 @@
+## Demo: 
+
+
+
+
+
+https://github.com/3bdrahman/GPT-Sync-Avatar/assets/35944185/95eedff4-402a-4e5b-a43c-ba3c86956ba3
+
 
 # GPT-Sync Avatar Project
 React application that imitates a virtual chat with a 3D Ready Player Me avatar (RPM) with help of the following APIs:
@@ -29,12 +37,6 @@ Follow these steps to get the project running locally:
 3. run `npm install` in both project folders back-end and front-end.
 4. refer to back-end documentation regarding environment variables / API keys.
 5. inside back-end project folder run `npm run dev`.
-## Demo: 
 
-
-
-
-
-https://github.com/3bdrahman/GPT-Sync-Avatar/assets/35944185/95eedff4-402a-4e5b-a43c-ba3c86956ba3
 
 
