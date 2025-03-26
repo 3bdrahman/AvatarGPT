@@ -11,7 +11,7 @@ https://github.com/3bdrahman/GPT-Sync-Avatar/assets/35944185/95eedff4-402a-4e5b-
 React application that imitates a virtual chat with a 3D Ready Player Me avatar (RPM) with help of the following APIs:
 - Openai Whisper API: transcription of audio recording
 - Openai ChatGPT API:  genrative AI responses to transcribed text
-- Microsoft-speeh-SDK: audio synthesis & viweme data for animation
+- Microsoft-speeh-SDK: audio synthesis & viseme data for animation
 - Ready Player Me FrameAPI: 3D avatars & Audio-to-Face animations
 
 ## Features
