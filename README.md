@@ -7,7 +7,7 @@
 https://github.com/3bdrahman/GPT-Sync-Avatar/assets/35944185/95eedff4-402a-4e5b-a43c-ba3c86956ba3
 
 
-# GPT-Sync Avatar Project
+# AvatarGPT Project
 React application that imitates a virtual chat with a 3D Ready Player Me avatar (RPM) with help of the following APIs:
 - Openai Whisper API: transcription of audio recording
 - Openai ChatGPT API:  genrative AI responses to transcribed text
