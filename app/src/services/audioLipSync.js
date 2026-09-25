@@ -1,5 +1,5 @@
 /**
- * Audio playback queue with phoneme-timestamp-driven lip-sync.
+ * Audio playback with estimated text-driven lip-sync.
  *
  * Uses a text timeline modulated by the playback volume for NVIDIA WAV
  * audio, and the same timeline with estimated timing for browser speech.
@@ -115,7 +115,7 @@ const CHAR_TO_VISEME = {
 
 const DEFAULT_VISEME = VISEMES.aa;
 
-// Phoneme duration weights for realistic speech timing (used when timestamps unavailable)
+// Character-derived viseme duration weights for estimated speech timing.
 const PHONEME_WEIGHTS = {
   [VISEMES.sil]: 1.4,
   [VISEMES.aa]:  2.4,
@@ -134,7 +134,7 @@ const PHONEME_WEIGHTS = {
   [VISEMES.kk]:  0.6,
 };
 
-// Critically-damped EMA: factor = 1 - exp(-dt/tau). Frame-rate-independent.
+// Spring response constants used by the frame-rate-independent dampers.
 const SMOOTH_ATTACK_TAU  = 0.045;
 const SMOOTH_RELEASE_TAU = 0.110;
 const SMOOTH_SIL_TAU     = 0.150;
@@ -219,7 +219,7 @@ export class AudioLipSync {
       idx++;
     }
 
-    let totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
     let currentAccum = 0;
     return items.map(item => {
       const startFrac = currentAccum / (totalWeight || 1);

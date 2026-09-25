@@ -31,7 +31,17 @@ export function encodeMonoPcm16(samples, sampleRate = TRANSCRIPTION_SAMPLE_RATE)
 }
 
 export async function toTranscriptionWav(recording) {
-  if (recording.type === 'audio/wav') return recording;
+  if (recording.type === 'audio/wav' && recording.size >= 44) {
+    const header = new DataView(await recording.slice(0, 44).arrayBuffer());
+    const hasText = (offset, value) => [...value].every((character, index) => header.getUint8(offset + index) === character.charCodeAt(0));
+    if (hasText(0, 'RIFF') && hasText(8, 'WAVE') && hasText(12, 'fmt ') && hasText(36, 'data') &&
+        header.getUint32(16, true) === 16 && header.getUint16(20, true) === 1 &&
+        header.getUint16(22, true) === 1 && header.getUint32(24, true) === TRANSCRIPTION_SAMPLE_RATE &&
+        header.getUint16(34, true) === 16 && header.getUint32(40, true) > 0 &&
+        header.getUint32(40, true) <= recording.size - 44) {
+      return recording;
+    }
+  }
 
   const AudioContextClass = globalThis.AudioContext || globalThis.webkitAudioContext;
   const OfflineAudioContextClass = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;

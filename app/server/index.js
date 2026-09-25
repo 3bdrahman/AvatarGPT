@@ -298,6 +298,7 @@ export function createApp(options = {}) {
   app.use(express.json({ limit: MAX_JSON_BYTES }));
 
   app.get('/api/health', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.json(publicHealth(env));
   });
 

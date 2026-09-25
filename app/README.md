@@ -15,6 +15,8 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173). The Vite client proxies `/api` to the Express server on port 3011. `.env` is ignored by Git and must stay on the server.
 
+The page rechecks service availability after startup, so it recovers when the API comes online without a reload. A failed text request keeps the question in the input for another attempt. Microphone permission requests can be cancelled from the microphone control.
+
 One `NVIDIA_API_KEY` powers chat, Parakeet transcription, and Magpie speech. Provider requests time out after 30 seconds so a stalled call does not leave the interface waiting indefinitely. If the speech service fails, the app labels and tries browser speech synthesis; if that is unavailable, the text reply remains visible. Mouth movement follows a text-timed estimate shaped by audio volume, so it is expressive rather than phoneme-accurate.
 
 ## Build and serve

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { encodeMonoPcm16 } from '../src/services/wav.js';
+import { encodeMonoPcm16, toTranscriptionWav } from '../src/services/wav.js';
 
 test('encodes mono PCM samples into a valid 16 kHz WAV upload', async () => {
   const wav = encodeMonoPcm16(Float32Array.from([-1, 0, 1]), 16000);
@@ -24,4 +24,37 @@ test('encodes mono PCM samples into a valid 16 kHz WAV upload', async () => {
     [view.getInt16(44, true), view.getInt16(46, true), view.getInt16(48, true)],
     [-32768, 0, 32767],
   );
+});
+
+test('normalizes a WAV recording with the wrong sample rate before transcription', async () => {
+  const originalAudioContext = globalThis.AudioContext;
+  const originalOfflineAudioContext = globalThis.OfflineAudioContext;
+  let decoded = false;
+  globalThis.AudioContext = class {
+    async decodeAudioData() {
+      decoded = true;
+      return { duration: 0.01 };
+    }
+    async close() {}
+  };
+  globalThis.OfflineAudioContext = class {
+    constructor(channels, frames, sampleRate) {
+      assert.deepEqual([channels, frames, sampleRate], [1, 160, 16000]);
+      this.destination = {};
+    }
+    createBufferSource() { return { connect() {}, start() {} }; }
+    async startRendering() { return { getChannelData: () => new Float32Array(160) }; }
+  };
+
+  try {
+    const recording = encodeMonoPcm16(new Float32Array(441), 44100);
+    const converted = await toTranscriptionWav(recording);
+    const view = new DataView(await converted.arrayBuffer());
+    assert.equal(decoded, true);
+    assert.equal(view.getUint32(24, true), 16000);
+    assert.equal(view.getUint16(22, true), 1);
+  } finally {
+    globalThis.AudioContext = originalAudioContext;
+    globalThis.OfflineAudioContext = originalOfflineAudioContext;
+  }
 });

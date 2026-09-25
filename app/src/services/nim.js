@@ -145,11 +145,16 @@ export async function synthesize(text) {
 }
 
 // ── Health check ──────────────────────────────────────────────
-export async function checkHealth() {
+export async function checkHealth(timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${API_BASE}/health`);
+    const res = await fetch(`${API_BASE}/health`, { signal: controller.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error('Health check failed.');
     return await res.json();
   } catch {
     return { ok: false, hasNvidiaKey: false };
+  } finally {
+    clearTimeout(timeout);
   }
 }

@@ -1,39 +1,60 @@
 import { useState, useRef, useEffect } from 'react';
 
-export function MicButton({ onRecordingComplete, onRecordingChange, onError, onInteraction, describedBy, disabled }) {
+export function MicButton({ onRecordingComplete, onRecordingChange, onStartingChange, onError, onInteraction, describedBy, disabled }) {
   const [isRecording, setIsRecording] = useState(false);
   const [starting, setStarting] = useState(false);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const startingRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
 
-  useEffect(() => () => {
-    const recorder = recorderRef.current;
-    if (recorder) {
-      recorder.ondataavailable = null;
-      recorder.onstop = null;
-      recorder.onerror = null;
-      if (recorder.state === 'recording') recorder.stop();
-    }
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const recorder = recorderRef.current;
+      if (recorder) {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        recorder.onerror = null;
+        if (recorder.state === 'recording') recorder.stop();
+      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    };
   }, []);
 
   const handleClick = async () => {
-    if (disabled || startingRef.current) return;
-    onInteraction?.();
+    if (startingRef.current) {
+      requestIdRef.current++;
+      startingRef.current = false;
+      setStarting(false);
+      onStartingChange?.(false);
+      return;
+    }
     if (isRecording) {
       const recorder = recorderRef.current;
       if (recorder?.state === 'recording') recorder.stop();
       return;
     }
+    if (disabled) return;
+    onInteraction?.();
 
     startingRef.current = true;
+    const requestId = ++requestIdRef.current;
     setStarting(true);
+    onStartingChange?.(true);
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
         throw new Error('This browser does not support microphone recording.');
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current || disabledRef.current || requestId !== requestIdRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
         .find((type) => MediaRecorder.isTypeSupported(type));
@@ -56,6 +77,7 @@ export function MicButton({ onRecordingComplete, onRecordingChange, onError, onI
         recorder.ondataavailable = null;
         if (recorder.state === 'recording') recorder.stop();
         stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
         recorderRef.current = null;
         setIsRecording(false);
         onRecordingChange?.(false);
@@ -66,12 +88,20 @@ export function MicButton({ onRecordingComplete, onRecordingChange, onError, onI
       setIsRecording(true);
       onRecordingChange?.(true);
     } catch (error) {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-      onError?.(error);
+      if (requestId === requestIdRef.current) {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        recorderRef.current = null;
+        if (mountedRef.current) onError?.(error);
+      }
     } finally {
-      startingRef.current = false;
-      setStarting(false);
+      if (requestId === requestIdRef.current) {
+        startingRef.current = false;
+        if (mountedRef.current) {
+          setStarting(false);
+          onStartingChange?.(false);
+        }
+      }
     }
   };
 
@@ -81,13 +111,13 @@ export function MicButton({ onRecordingComplete, onRecordingChange, onError, onI
       type="button"
       className={`mic-button ${isRecording ? 'recording' : ''}`}
       onClick={handleClick}
-      disabled={disabled || starting}
+      disabled={disabled && !starting && !isRecording}
       aria-pressed={isRecording}
-      aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+      aria-label={starting ? 'Cancel microphone request' : isRecording ? 'Stop recording' : 'Start recording'}
       aria-describedby={describedBy}
     >
       <span className="mic-icon">
-        {isRecording ? (
+        {isRecording || starting ? (
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <rect x="6" y="6" width="12" height="12" rx="2" />
           </svg>

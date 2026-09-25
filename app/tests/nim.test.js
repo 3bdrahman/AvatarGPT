@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { streamChat, synthesize, transcribe } from '../src/services/nim.js';
+import { streamChat, synthesize, transcribe, checkHealth } from '../src/services/nim.js';
+import { encodeMonoPcm16 } from '../src/services/wav.js';
 
 function sseResponse(chunks) {
   const encoder = new TextEncoder();
@@ -80,8 +81,26 @@ test('transcription sends WAV and reads the live provider transcript', async () 
     });
   };
   try {
-    const transcript = await transcribe(new Blob(['wav'], { type: 'audio/wav' }));
+    const transcript = await transcribe(encodeMonoPcm16(new Float32Array(160), 16000));
     assert.equal(transcript, 'Hello from the demo.');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('health check ends a stalled request and reports the service unavailable', async () => {
+  const originalFetch = globalThis.fetch;
+  let aborted = false;
+  globalThis.fetch = (_url, options) => new Promise((_, reject) => {
+    assert.equal(options.cache, 'no-store');
+    options.signal.addEventListener('abort', () => {
+      aborted = true;
+      reject(options.signal.reason);
+    }, { once: true });
+  });
+  try {
+    assert.deepEqual(await checkHealth(30), { ok: false, hasNvidiaKey: false });
+    assert.equal(aborted, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

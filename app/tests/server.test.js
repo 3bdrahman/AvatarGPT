@@ -92,7 +92,9 @@ describe('server contract', () => {
     });
     const { origin } = await listen(app);
 
-    const initial = await readJson(await fetch(`${origin}/api/health`));
+    const initialRes = await fetch(`${origin}/api/health`);
+    assert.equal(initialRes.headers.get('cache-control'), 'no-store');
+    const initial = await readJson(initialRes);
     assert.deepEqual(initial, {
       ok: true,
       hasNvidiaKey: false,

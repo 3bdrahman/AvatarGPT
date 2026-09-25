@@ -54,15 +54,15 @@ function App() {
 
   useEffect(() => {
     let active = true;
-    checkHealth().then((health) => {
+    let healthTimer;
+    const refreshHealth = async () => {
+      const health = await checkHealth();
       if (!active) return;
-      setConnection({
-        checked: true,
-        online: Boolean(health.ok),
-        hasNvidiaKey: Boolean(health.hasNvidiaKey),
-      });
-      setSpeechMode('');
-    });
+      const ready = Boolean(health.ok && health.hasNvidiaKey);
+      setConnection({ checked: true, online: Boolean(health.ok), hasNvidiaKey: Boolean(health.hasNvidiaKey) });
+      healthTimer = setTimeout(refreshHealth, ready ? 30_000 : 5_000);
+    };
+    refreshHealth();
     lipSync.onIdle = () => setStage((current) => current === 'speaking' ? 'idle' : current);
     lipSync.onPlaybackError = (_error, text) => {
       setSpeechMode('Browser voice (audio playback unavailable)');
@@ -74,6 +74,7 @@ function App() {
     lipSync.onSpeechError = () => setSpeechMode('Text only (speech unavailable)');
     return () => {
       active = false;
+      clearTimeout(healthTimer);
       clearTimeout(errorTimerRef.current);
       lipSync.onIdle = null;
       lipSync.onPlaybackError = null;
@@ -102,7 +103,7 @@ function App() {
 
   const processInput = useCallback(async (userText) => {
     const text = userText.trim();
-    if (!text || requestInFlightRef.current) return;
+    if (!text || requestInFlightRef.current) return false;
     requestInFlightRef.current = true;
     clearTimeout(errorTimerRef.current);
     lipSync.stop();
@@ -148,6 +149,7 @@ function App() {
         if (!playing) setSpeechMode('Text only (speech unavailable)');
       }
       if (!playing) setStage('idle');
+      return true;
     } catch (error) {
       if (!replyCommitted) {
         messagesRef.current = messagesRef.current.map((message) => (
@@ -157,6 +159,7 @@ function App() {
       }
       setStreamingText('');
       showError(error.message || 'The request failed. Please try again.');
+      return replyCommitted;
     } finally {
       requestInFlightRef.current = false;
     }
@@ -181,7 +184,7 @@ function App() {
   }, [processInput, showError]);
 
   const ready = connection.online && connection.hasNvidiaKey;
-  const isBusy = stage === 'recording' || stage === 'transcribing' || stage === 'thinking' || stage === 'synthesizing';
+  const isBusy = stage === 'starting' || stage === 'recording' || stage === 'transcribing' || stage === 'thinking' || stage === 'synthesizing';
 
   return (
     <div className="app">
@@ -223,6 +226,10 @@ function App() {
           <div className="controls">
             <MicButton
               onRecordingComplete={handleRecordingComplete}
+              onStartingChange={(starting) => {
+                if (starting) setStage('starting');
+                else setStage((current) => current === 'starting' ? 'idle' : current);
+              }}
               onRecordingChange={(recording) => {
                 if (recording) lipSync.stop();
                 setStage(recording ? 'recording' : 'idle');
@@ -230,7 +237,7 @@ function App() {
               onError={(error) => showError(error.message || 'Microphone access failed.')}
               onInteraction={prepareAudio}
               describedBy={connection.checked && !ready ? 'setup-notice' : undefined}
-              disabled={!ready || (isBusy && stage !== 'recording')}
+              disabled={!ready || (isBusy && stage !== 'starting' && stage !== 'recording')}
             />
             <TextInput onSubmit={processInput} describedBy={connection.checked && !ready ? 'setup-notice' : undefined} disabled={!ready || isBusy} />
           </div>

@@ -1,4 +1,5 @@
 const STAGES = {
+  starting: 'Opening microphone…',
   recording: 'Listening…',
   transcribing: 'Transcribing…',
   thinking: 'Thinking…',
