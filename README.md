@@ -1,42 +1,23 @@
-## Demo: 
+# Virtual Assistant
 
+A live AI conversation with a 3D avatar. Ask a question by text or voice, read the streamed response, and hear the avatar speak. The browser never asks visitors for an API key.
 
+![Virtual Assistant desktop preview](docs/preview.png)
 
+The runnable project is [app/](app/). It uses React and Three.js in the browser, an Express server for the API key and provider calls, and NVIDIA chat, Parakeet transcription, and Magpie speech. There are no scripted demo answers.
 
+## Run locally
 
-https://github.com/3bdrahman/GPT-Sync-Avatar/assets/35944185/95eedff4-402a-4e5b-a43c-ba3c86956ba3
+Use Node.js 22+ and a server-side NVIDIA API key:
 
+```bash
+cd app
+cp .env.example .env
+# Add your server-side NVIDIA_API_KEY to .env
+npm ci
+npm run dev
+```
 
-# AvatarGPT Project
-React application that imitates a virtual chat with a 3D Ready Player Me avatar (RPM) with help of the following APIs:
-- Openai Whisper API: transcription of audio recording
-- Openai ChatGPT API:  genrative AI responses to transcribed text
-- Microsoft-speeh-SDK: audio synthesis & viseme data for animation
-- Ready Player Me FrameAPI: 3D avatars & Audio-to-Face animations
+Open `http://localhost:5173`. For a production-style run, use `npm run build && npm start` inside `app/`. The setup, deployment notes, and validation commands are in the [app guide](app/README.md).
 
-## Features
-- Accepts audio using React Media Recorder
-- Transcribes audio using Openai Whisper API
-- Feeds response of ChatGPT API into Microsoft-speech-sdk in order to receive synthesized audio of the response and viseme data.
-- Renders 3D RPM avatar in GLTF fromat using Three.js
-- Utlizes Blendshapes animations and audio offset objects provided by Microsoft-speech-sdk to drive Lib-Sync animations.
-
-## Back-end project:
-Please review the back-end component of this project <a href="https://github.com/3bdrahman/avatarGPT-Backend"> here </a>.
-
-## Prerequisites 
-- To run the project, ensure to clone and follow steps for back-end project.
-- Node V16.16.0
-- NPM   V9.6.6
-
-## Getting Started
-Follow these steps to get the project running locally:
-1. Creat project directory that will contain both front-end and back-end projects.
-2. Clone the front-end project after clonning back-end project.
-<br>`git clone https://github.com/3bdrahman/avatarGPT.git`.
-3. run `npm install` in both project folders back-end and front-end.
-4. refer to back-end documentation regarding environment variables / API keys.
-5. inside back-end project folder run `npm run dev`.
-
-
-
+The app shows the real service state. If the server or provider key is unavailable, it explains why live conversation cannot start. Text chat remains available when WebGL or speech output is unsupported.
